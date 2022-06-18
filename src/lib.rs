@@ -18,12 +18,15 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_trait_selection;
 extern crate rustc_typeck;
-
-use rustc_lint::{LateLintPass,LateContext, LateContextAndPass};
-use rustc_hir::{self as hir, def_id::DefId};
+use clippy_utils::match_def_path;
+use rustc_lint::{LateLintPass,LateContext};
+use rustc_hir::{def_id::DefId, Body, Expr};
 use clippy_utils::diagnostics::span_lint_and_help;
 use clippy_utils::ty::{is_type_diagnostic_item, is_type_lang_item};
 use cosmwasm_std::{CanonicalAddr};
+
+
+// TODO: Move this out into a sep file
 pub fn is_canon_addr_call(cx: &LateContext<'_>, fn_def_id: DefId) -> bool {
     match_def_path(cx, fn_def_id, &CANONADDRCALL)
 }
@@ -52,32 +55,29 @@ dylint_linting::declare_late_lint! {
     "description goes here"
 }
 
-impl<'tcx> LateLintPass<'tcx> for FillMeIn {
-    // A list of things you might check can be found here:
-    // https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint/trait.LateLintPass.html
+// impl<'tcx> LateLintPass<'tcx> for FillMeIn {
+//     // A list of things you might check can be found here:
+//     // https://doc.rust-lang.org/stable/nightly-rustc/rustc_lint/trait.LateLintPass.html
 
-}
+// }
 
-impl LateLintPass<'_> for MyStructLint {
-    fn check_expr(&mut self, cx: &LateContext<'_>, expr: &Expr<'_>) {
-        // Getting the expression type
-        let ty = cx.typeck_results().expr_ty(expr);
-
-        // 1. Using diagnostic items
-        // The last argument is the diagnostic item to check for
-        if is_canon_addr_call(cx, ty) {
-            // The type is an `Option`
-            span_lint_and_help(
-                cx,
-                FILL_ME_IN,
-                hir_ty.span,
-                "you seem to be using a `CanonicalAddr`! This is often not needed and Addr should be used instead.",
-                None,
-                "an `Addr` might work",
-            );
-            true
-        } else {
-            false
+impl<'hir> LateLintPass<'hir>for FillMeIn {
+    fn check_expr(&mut self, cx: &LateContext<'hir>, expr: &'hir Expr<'hir>) {
+        // Getting the fn definition type
+        if let Some(fn_def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id) {
+            // Use check_match_def to find out whether the cosmwasm_std::CanonicalAddr is used
+            if is_canon_addr_call(cx, fn_def_id) {
+                // The type is an `Option`
+                span_lint_and_help(
+                    cx,
+                    FILL_ME_IN,
+                    expr.span,
+                    "you seem to be using a `CanonicalAddr`! This is often not needed and Addr should be used instead.",
+                    None,
+                    "an `Addr` might work",
+                );
+                
+            } 
         }
     }
 }
