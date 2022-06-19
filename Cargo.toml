@@ -1,9 +1,9 @@
 [package]
-name = "fill_me_in"
+name = "cw-lint"
 version = "0.1.0"
-authors = ["authors go here"]
-description = "decription goes here"
-edition = "2018"
+authors = ["0xFable github.users.0xFable.com"]
+description = "A dylint-based linting library for CosmWasm based projects providing code quality suggestions and static analysis"
+edition = "2021"
 publish = false
 
 [lib]
