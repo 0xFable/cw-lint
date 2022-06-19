@@ -20,10 +20,8 @@ extern crate rustc_trait_selection;
 extern crate rustc_typeck;
 use clippy_utils::match_def_path;
 use rustc_lint::{LateLintPass,LateContext};
-use rustc_hir::{def_id::DefId, Body, Expr};
+use rustc_hir::{def_id::DefId, Expr};
 use clippy_utils::diagnostics::span_lint_and_help;
-use clippy_utils::ty::{is_type_diagnostic_item, is_type_lang_item};
-use cosmwasm_std::{CanonicalAddr};
 
 
 // TODO: Move this out into a sep file
@@ -35,11 +33,13 @@ pub const CANONADDRCALL: [&str; 2] = ["cosmwasm_std", "CanonicalAddr"];
 
 
 dylint_linting::declare_late_lint! {
-    /// **What it does:**
+    /// **CANONICAL_ADDR_USAGE: This lint is one of the most basic possible against the 
+    /// cosmwasm library. Provided in the cosmwasm is both Addr which represents an Address and CanonicalAddr which represents a Canonical Address. 
+    /// This lint detected your superfluous use of CanonicalAddr**
     ///
-    /// **Why is this bad?**
+    /// **Genreally, CanonicalAddr is unneeded in contracts and will result in you the develop writing many casts between Strings, CanonicalAddrs and Addrs when generally only the middle two are needed?**
     ///
-    /// **Known problems:** None.
+    /// **Known problems:** The only problem with this is extra excessive code. Disable this lint if you are set on using CanonicalAddr. 
     ///
     /// **Example:**
     ///
@@ -50,7 +50,7 @@ dylint_linting::declare_late_lint! {
     /// ```rust
     /// // example code that does not raise a warning
     /// ```
-    pub FILL_ME_IN,
+    pub CANONICAL_ADDR_USAGE,
     Warn,
     "description goes here"
 }
@@ -61,7 +61,7 @@ dylint_linting::declare_late_lint! {
 
 // }
 
-impl<'hir> LateLintPass<'hir>for FillMeIn {
+impl<'hir> LateLintPass<'hir>for CanonicalAddrUsage {
     fn check_expr(&mut self, cx: &LateContext<'hir>, expr: &'hir Expr<'hir>) {
         // Getting the fn definition type
         if let Some(fn_def_id) = cx.typeck_results().type_dependent_def_id(expr.hir_id) {
@@ -70,7 +70,7 @@ impl<'hir> LateLintPass<'hir>for FillMeIn {
                 // The type is an `Option`
                 span_lint_and_help(
                     cx,
-                    FILL_ME_IN,
+                    CANONICAL_ADDR_USAGE,
                     expr.span,
                     "you seem to be using a `CanonicalAddr`! This is often not needed and Addr should be used instead.",
                     None,
